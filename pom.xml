@@ -1,0 +1,211 @@
+<!--
+ * Copyright (C) 2019 Eclipse Foundation and others. 
+ * 
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0.
+ * 
+ * SPDX-FileType: DOCUMENTATION
+ *
+ * SPDX-FileCopyrightText: 2019 Eclipse Foundation
+ * SPDX-License-Identifier: EPL-2.0
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.eclipse.dash</groupId>
+	<artifactId>dash-licenses-parent</artifactId>
+	<version>1.1.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
+
+	<licenses>
+		<license>
+			<name>Eclipse Public License 2.0</name>
+			<url>https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt</url>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Wayne Beaton</name>
+			<organization>The Eclipse Foundation</organization>
+			<organizationUrl>https://eclipse.org</organizationUrl>
+		</developer>
+	</developers>
+
+	<organization>
+		<name>The Eclipse Dash Project</name>
+		<url>https://projects.eclipse.org/projects/technology.dash</url>
+	</organization>
+
+	<name>Eclipse Dash License Tool Root</name>
+	<description>The Eclipse Dash License Tool identifies the licenses of content.</description>
+	<url>https://github.com/eclipse-dash/dash-licenses</url>
+
+	<scm>
+		<url>https://github.com/eclipse-dash/dash-licenses</url>
+		<developerConnection>scm:git:git@github.com:eclipse-dash/dash-licenses.git</developerConnection>
+		<tag>HEAD</tag>
+	</scm>
+
+	<issueManagement>
+		<system>GitHub</system>
+		<url>https://github.com/eclipse-dash/dash-licenses/issues</url>
+	</issueManagement>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<modules>
+		<module>core</module>
+		<module>maven-plugin</module>
+		<module>shaded</module>
+	</modules>
+
+	<dependencies>
+			<dependency>
+			<!-- 
+				This is an indirect dependency. Force a more recent version than what's getting
+				resolved to satisfy guice requirements.
+			-->
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>33.6.0-jre</version>
+		</dependency>
+		<dependency>
+			<groupId>org.cyclonedx</groupId>
+			<artifactId>cyclonedx-core-java</artifactId>
+			<version>12.2.0</version>
+	</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>failureaccess</artifactId>
+			<version>1.0.3</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.15.0</version>
+					<configuration>
+						<source>11</source>
+						<target>11</target>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-deploy-plugin</artifactId>
+					<version>3.1.4</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>3.5.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-source-plugin</artifactId>
+					<version>3.4.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-resources-plugin</artifactId>
+					<version>3.5.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-clean-plugin</artifactId>
+					<version>3.5.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-install-plugin</artifactId>
+					<version>3.1.4</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<version>3.6.2</version>
+				<executions>
+					<execution>
+						<id>enforce-maven</id>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<requireMavenVersion>
+									<version>3.2.0</version>
+								</requireMavenVersion>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>3.3.1</version>
+				<configuration>
+					<tagNameFormat>@{project.version}</tagNameFormat>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.cyclonedx</groupId>
+				<artifactId>cyclonedx-maven-plugin</artifactId>
+				<version>2.9.1</version>
+				<configuration>
+					<projectType>library</projectType>
+					<schemaVersion>1.4</schemaVersion>
+					<includeBomSerialNumber>true</includeBomSerialNumber>
+					<includeCompileScope>true</includeCompileScope>
+					<includeProvidedScope>true</includeProvidedScope>
+					<includeRuntimeScope>true</includeRuntimeScope>
+					<includeSystemScope>true</includeSystemScope>
+					<includeTestScope>false</includeTestScope>
+					<includeLicenseText>false</includeLicenseText>
+					<outputReactorProjects>true</outputReactorProjects>
+					<outputFormat>json</outputFormat>
+					<outputName>bom</outputName>
+					<outputDirectory>${project.build.directory}</outputDirectory>
+					<verbose>false</verbose>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>makeAggregateBom</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	<repositories>
+		<repository>
+			<id>dash-repo</id>
+			<name>Eclipse Nexus Repository</name>
+			<url>https://repo.eclipse.org/content/repositories/dash-licenses</url>
+		</repository>
+	</repositories>
+	<distributionManagement>
+		<repository>
+			<id>repo.eclipse.org</id>
+			<name>Eclipse Dash Nexus Repository - Releases</name>
+			<url>https://repo.eclipse.org/content/repositories/dash-licenses-releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>repo.eclipse.org</id>
+			<name>Eclipse Dash Nexus Repository - Snapshots</name>
+			<url>https://repo.eclipse.org/content/repositories/dash-licenses-snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
+</project>

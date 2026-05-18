@@ -1,0 +1,7 @@
+target/
+bin/
+#Generated Eclipse configuration files
+.project
+.classpath
+.factorypath
+**/.settings/**
