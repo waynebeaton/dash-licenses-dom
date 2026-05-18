@@ -171,7 +171,7 @@ public class Main {
 			case "yarn.lock":
 				return new YarnLockFileReader(input);
 			case "cyclonedx.java":
-				return new SbomFileReader(file)
+				return new SbomFileReader(file);
 			}
 		}
 		return new FlatFileReader(input);
