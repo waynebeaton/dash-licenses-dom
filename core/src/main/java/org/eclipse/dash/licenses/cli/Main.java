@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -20,6 +21,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.eclipse.dash.licenses.IContentId;
 import org.eclipse.dash.licenses.LicenseChecker;
@@ -58,10 +62,13 @@ public class Main {
 	 * completing its work. Depending on the exact problem, a re-try might or might
 	 * not work.
 	 */
+
+	//if the program crashes for any reason, use exit code 127
 	final static Integer INTERNAL_ERROR = 127;
 
 	final Logger logger = LoggerFactory.getLogger(Main.class);
 
+	//program starts here:
 	public static void main(String[] args) {
 		CommandLineSettings settings = CommandLineSettings.getSettings(args);
 		new Main().doit(settings);
@@ -153,27 +160,44 @@ public class Main {
 	}
 
 	private IDependencyListReader getReader(String name) throws FileNotFoundException {
-		InputStreamReader input;
 		if ("-".equals(name)) {
-			input = new InputStreamReader(System.in);
-		} else {
-			File file = new File(name);
-			if (!file.exists()) {
-				throw new FileNotFoundException(name);
-			}
-			
-			input = new FileReader(file);
-			switch (file.getName()) {
-			case "pnpm-lock.yaml":
-				return new PnpmPackageLockFileReader(input);
-			case "package-lock.json":
-				return new PackageLockFileReader(input);
-			case "yarn.lock":
-				return new YarnLockFileReader(input);
-			case "cyclonedx.java":
-				return new SbomFileReader(file);
+			return new FlatFileReader(new InputStreamReader(System.in));
+		}
+
+		File file = new File(name);
+		if (!file.exists()) {
+			throw new FileNotFoundException(name);
+		}
+
+		switch (file.getName()) {
+		case "pnpm-lock.yaml":
+			return new PnpmPackageLockFileReader(new FileReader(file));
+		case "package-lock.json":
+			return new PackageLockFileReader(new FileReader(file));
+		case "yarn.lock":
+			return new YarnLockFileReader(new FileReader(file));
+		}
+
+		if (isSbomFile(file)) {
+			return new SbomFileReader(file);
+		}
+
+		return new FlatFileReader(new FileReader(file));
+	}
+
+	private boolean isSbomFile(File file) {
+		String name = file.getName().toLowerCase();
+		if (name.endsWith(".xml") || name.endsWith(".spdx")) {
+			return true;
+		}
+		if (name.endsWith(".json")) {
+			try {
+				JsonNode root = new ObjectMapper().readTree(file);
+				return root.has("bomFormat") || root.has("spdxVersion") || root.has("specVersion");
+			} catch (IOException e) {
+				return false;
 			}
 		}
-		return new FlatFileReader(input);
+		return false;
 	}
 }
