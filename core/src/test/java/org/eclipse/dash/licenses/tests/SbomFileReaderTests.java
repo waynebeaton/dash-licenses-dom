@@ -20,35 +20,30 @@ import org.junit.jupiter.api.Test;
 
 class SbomFileReaderTests {
 
-	private static final String AFS_CYCLONEDX_JSON = "/afs-1.0.0-cyclonedx.json";
-<<<<<<< HEAD
-	private static final String CACHE_PARENT_CYCLONEDX_XML = "/cache-parent-1.1.0-cyclonedx.xml";
-=======
+    private static final String AFS_CYCLONEDX_JSON = "/afs-1.0.0-cyclonedx.json";
+    private static final String CACHE_PARENT_CYCLONEDX_XML = "/cache-parent-1.1.0-cyclonedx.xml";
 
->>>>>>> 4edcfe292b08a10987396871a04734153961638c
-	@Test
-	void testV1Format() throws Exception {
-		var input = new File(this.getClass().getResource(AFS_CYCLONEDX_JSON).toURI());
-		SbomFileReader reader = new SbomFileReader(input);
-		var expected = Arrays.asList(new String[] { 
-				"maven/mavencentral/org.eclipse.serializer/afs/1.0.0",
-				"maven/mavencentral/org.eclipse.serializer/base/1.0.0",
-				"maven/mavencentral/org.slf4j/slf4j-api/1.7.32" 
-		});
-		var found = reader.getContentIds().stream().map(each -> each.toString()).collect(Collectors.toList());
-		assertEquals(expected, found);
-	}
-<<<<<<< HEAD
-	@Test
-	void testXmlFormat() throws Exception {
-		var input = new File(this.getClass().getResource(CACHE_PARENT_CYCLONEDX_XML).toURI());
-		SbomFileReader reader = new SbomFileReader(input);
-		var expected = Arrays.asList(new String[] {
-				"maven/mavencentral/org.eclipse.store/cache-parent/1.1.0"
-		});
-		var found = reader.getContentIds().stream().map(each -> each.toString()).collect(Collectors.toList());
-		assertEquals(expected, found);
-	}
-=======
->>>>>>> 4edcfe292b08a10987396871a04734153961638c
+    @Test
+    void testV1Format() throws Exception {
+        var input = new File(this.getClass().getResource(AFS_CYCLONEDX_JSON).toURI());
+        SbomFileReader reader = new SbomFileReader(input);
+        var expected = Arrays.asList(new String[] {
+                "maven/mavencentral/org.eclipse.serializer/afs/1.0.0",
+                "maven/mavencentral/org.eclipse.serializer/base/1.0.0",
+                "maven/mavencentral/org.slf4j/slf4j-api/1.7.32"
+        });
+        var found = reader.getContentIds().stream().map(each -> each.toString()).collect(Collectors.toList());
+        assertEquals(expected, found);
+    }
+
+    @Test
+    void testXmlFormat() throws Exception {
+        var input = new File(this.getClass().getResource(CACHE_PARENT_CYCLONEDX_XML).toURI());
+        SbomFileReader reader = new SbomFileReader(input);
+        var expected = Arrays.asList(new String[] {
+                "maven/mavencentral/org.eclipse.store/cache-parent/1.1.0"
+        });
+        var found = reader.getContentIds().stream().map(each -> each.toString()).collect(Collectors.toList());
+        assertEquals(expected, found);
+    }
 }
