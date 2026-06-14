@@ -184,10 +184,18 @@ public class Main {
 
 		return new FlatFileReader(new FileReader(file));
 	}
-
+	
 	private boolean isSbomFile(File file) {
 		String name = file.getName().toLowerCase();
+		// Added rdf format, yaml format, and spdx format
 		if (name.endsWith(".xml") || name.endsWith(".spdx")) {
+			return true;
+		}
+		
+		if (name.endsWith(".rdf")) {
+			return true;
+		}
+		if (name.endsWith(".yaml") || name.endsWith(".yml")) {
 			return true;
 		}
 		if (name.endsWith(".json")) {
