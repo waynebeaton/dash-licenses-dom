@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:spdx="https://spdx.org/rdf/terms#"
+    xmlns:doap="http://usefulinc.com/ns/doap#"
+    xmlns:ptr="http://www.w3.org/2009/pointers#">
+
+    <spdx:SpdxDocument rdf:about="https://spdx.org/spdxdocs/test-doc-1.0">
+        <spdx:specVersion>SPDX-2.3</spdx:specVersion>
+        <spdx:dataLicense rdf:resource="http://spdx.org/licenses/CC0-1.0"/>
+        <spdx:name>test-sbom</spdx:name>
+
+        <spdx:describesPackage>
+            <spdx:Package rdf:about="https://spdx.org/spdxdocs/test-doc-1.0#SPDXRef-Package">
+                <spdx:name>slf4j-api</spdx:name>
+                <spdx:versionInfo>1.7.32</spdx:versionInfo>
+                <spdx:downloadLocation>https://repo1.maven.org/maven2/org/slf4j/slf4j-api/1.7.32/slf4j-api-1.7.32.jar</spdx:downloadLocation>
+                <spdx:externalRef>
+                    <spdx:ExternalRef>
+                        <spdx:referenceCategory>PACKAGE_MANAGER</spdx:referenceCategory>
+                        <spdx:referenceType>purl</spdx:referenceType>
+                        <spdx:referenceLocator>pkg:maven/org.slf4j/slf4j-api@1.7.32</spdx:referenceLocator>
+                    </spdx:ExternalRef>
+                </spdx:externalRef>
+            </spdx:Package>
+        </spdx:describesPackage>
+
+    </spdx:SpdxDocument>
+</rdf:RDF>
