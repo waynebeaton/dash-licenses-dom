@@ -230,12 +230,10 @@ public class SpdxDependencyFileReader {
 	private void addPackageExternalRefs(Set<IContentId> found, SpdxPackage spdxPackage)
 			throws InvalidSPDXAnalysisException {
 		for (ExternalRef ref : spdxPackage.getExternalRefs()) {
-			String refTypeUri = ref.getReferenceType().getIndividualURI();
 			if (ref.getReferenceCategory() != ReferenceCategory.PACKAGE_MANAGER) {
 				continue;
 			}
-			if (!(SpdxConstantsCompatV2.SPDX_LISTED_REFERENCE_TYPES_PREFIX + "purl").equalsIgnoreCase(refTypeUri)
-					&& !"purl".equalsIgnoreCase(ref.getReferenceType().toString())) {
+			if (!isPurlReferenceType(ref)) {
 				continue;
 			}
 
@@ -244,6 +242,12 @@ public class SpdxDependencyFileReader {
 				found.add(id);
 			}
 		}
+	}
+
+	private boolean isPurlReferenceType(ExternalRef ref) throws InvalidSPDXAnalysisException {
+		String refTypeUri = ref.getReferenceType().getIndividualURI();
+		return (SpdxConstantsCompatV2.SPDX_LISTED_REFERENCE_TYPES_PREFIX + "purl").equalsIgnoreCase(refTypeUri)
+				|| "purl".equalsIgnoreCase(ref.getReferenceType().toString());
 	}
 
 	private void initializeSpdxTools() {
