@@ -14,11 +14,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -30,12 +32,15 @@ import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.eclipse.dash.licenses.IContentId;
 import org.eclipse.dash.licenses.PackageUrlIdParser;
+import org.spdx.core.InvalidSPDXAnalysisException;
 import org.spdx.library.SpdxModelFactory;
 import org.spdx.library.model.v2.ExternalRef;
 import org.spdx.library.model.v2.SpdxConstantsCompatV2;
+import org.spdx.library.model.v2.SpdxDocument;
 import org.spdx.library.model.v2.SpdxPackage;
 import org.spdx.library.model.v2.enumerations.ReferenceCategory;
-import org.spdx.spdxRdfStore.RdfStore;
+import org.spdx.tools.SpdxToolsHelper;
+import org.spdx.tools.SpdxToolsHelper.SerFileType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -43,6 +48,7 @@ import org.w3c.dom.NodeList;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 public class SpdxDependencyFileReader {
@@ -52,6 +58,7 @@ public class SpdxDependencyFileReader {
 	private static final PackageUrlIdParser PURL_PARSER = new PackageUrlIdParser();
 	private static final Pattern PURL_PATTERN = Pattern.compile("pkg:[^\\s\"'<>]+");
 	private static final DataFormatter CELL_FORMATTER = new DataFormatter();
+	private static final AtomicBoolean SPDX_TOOLS_INITIALIZED = new AtomicBoolean();
 
 	private final File file;
 
@@ -106,40 +113,11 @@ public class SpdxDependencyFileReader {
 	}
 
 	private List<IContentId> parseJson(File file) {
-		try {
-			return extractFromSpdxNode(OBJECT_MAPPER.readTree(file));
-		} catch (IOException e) {
-			return new ArrayList<>();
-		}
+		return parseWithToolsJava(file, SerFileType.JSON);
 	}
 
 	private List<IContentId> parseYaml(File file) {
-		try {
-			return extractFromSpdxNode(YAML_MAPPER.readTree(file));
-		} catch (IOException e) {
-			return new ArrayList<>();
-		}
-	}
-
-	private List<IContentId> extractFromSpdxNode(JsonNode root) {
-		Set<IContentId> found = new LinkedHashSet<>();
-
-		for (JsonNode pkg : root.path("packages")) {
-			for (JsonNode ref : pkg.path("externalRefs")) {
-				String category = ref.path("referenceCategory").asText("");
-				String type = ref.path("referenceType").asText("");
-				if (!isPackageManagerPurl(category, type)) {
-					continue;
-				}
-
-				IContentId id = PURL_PARSER.parseId(ref.path("referenceLocator").asText(null));
-				if (id != null) {
-					found.add(id);
-				}
-			}
-		}
-
-		return new ArrayList<>(found);
+		return parseWithToolsJava(file, SerFileType.YAML);
 	}
 
 	private List<IContentId> parseTagValue(File file) {
@@ -214,38 +192,91 @@ public class SpdxDependencyFileReader {
 		return values.item(0).getTextContent();
 	}
 
-	@SuppressWarnings("unchecked")
 	private List<IContentId> parseRdfXml(File file) {
+		return parseWithToolsJava(file, SerFileType.RDFXML);
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<IContentId> parseWithToolsJava(File file, SerFileType fileType) {
+		File normalized = file;
 		Set<IContentId> found = new LinkedHashSet<>();
 		try {
-			RdfStore rdfStore = new RdfStore();
-			String documentUri = rdfStore.loadModelFromFile(file.getPath(), false);
+			initializeSpdxTools();
+			normalized = normalizeForToolsJava(file, fileType);
+			SpdxDocument document = SpdxToolsHelper.deserializeDocumentCompatV2(normalized, fileType);
 			List<SpdxPackage> packages = (List<SpdxPackage>) SpdxModelFactory
-					.getSpdxObjects(rdfStore, null, SpdxConstantsCompatV2.CLASS_SPDX_PACKAGE, documentUri, null)
+					.getSpdxObjects(document.getModelStore(), null, SpdxConstantsCompatV2.CLASS_SPDX_PACKAGE,
+							document.getDocumentUri(), null)
 					.collect(Collectors.toList());
-
 			for (SpdxPackage spdxPackage : packages) {
-				for (ExternalRef ref : spdxPackage.getExternalRefs()) {
-					String refTypeUri = ref.getReferenceType().getIndividualURI();
-					if (ref.getReferenceCategory() != ReferenceCategory.PACKAGE_MANAGER) {
-						continue;
-					}
-					if (!(SpdxConstantsCompatV2.SPDX_LISTED_REFERENCE_TYPES_PREFIX + "purl")
-							.equalsIgnoreCase(refTypeUri)) {
-						continue;
-					}
-
-					IContentId id = PURL_PARSER.parseId(ref.getReferenceLocator());
-					if (id != null) {
-						found.add(id);
-					}
-				}
+				addPackageExternalRefs(found, spdxPackage);
 			}
 		} catch (Exception e) {
 			return new ArrayList<>();
+		} finally {
+			if (!file.equals(normalized)) {
+				try {
+					Files.deleteIfExists(normalized.toPath());
+				} catch (IOException e) {
+				}
+			}
 		}
-
 		return new ArrayList<>(found);
+	}
+
+	private void addPackageExternalRefs(Set<IContentId> found, SpdxPackage spdxPackage)
+			throws InvalidSPDXAnalysisException {
+		for (ExternalRef ref : spdxPackage.getExternalRefs()) {
+			String refTypeUri = ref.getReferenceType().getIndividualURI();
+			if (ref.getReferenceCategory() != ReferenceCategory.PACKAGE_MANAGER) {
+				continue;
+			}
+			if (!(SpdxConstantsCompatV2.SPDX_LISTED_REFERENCE_TYPES_PREFIX + "purl").equalsIgnoreCase(refTypeUri)
+					&& !"purl".equalsIgnoreCase(ref.getReferenceType().toString())) {
+				continue;
+			}
+
+			IContentId id = PURL_PARSER.parseId(ref.getReferenceLocator());
+			if (id != null) {
+				found.add(id);
+			}
+		}
+	}
+
+	private void initializeSpdxTools() {
+		if (SPDX_TOOLS_INITIALIZED.compareAndSet(false, true)) {
+			SpdxToolsHelper.initialize();
+		}
+	}
+
+	private File normalizeForToolsJava(File file, SerFileType fileType) throws IOException {
+		switch (fileType) {
+		case JSON:
+			return writeNormalizedJsonOrYaml(file, OBJECT_MAPPER, ".json");
+		case YAML:
+			return writeNormalizedJsonOrYaml(file, YAML_MAPPER, ".yaml");
+		default:
+			return file;
+		}
+	}
+
+	private File writeNormalizedJsonOrYaml(File file, ObjectMapper mapper, String suffix) throws IOException {
+		JsonNode root = mapper.readTree(file);
+		if (!(root instanceof ObjectNode)) {
+			return file;
+		}
+		ObjectNode object = (ObjectNode) root;
+		if (object.hasNonNull("documentNamespace")) {
+			return file;
+		}
+		object.put("documentNamespace", syntheticDocumentNamespace(file));
+		Path normalized = Files.createTempFile("spdx-tools-", suffix);
+		mapper.writeValue(normalized.toFile(), object);
+		return normalized.toFile();
+	}
+
+	private String syntheticDocumentNamespace(File file) {
+		return "https://example.org/spdx/" + file.getName().replaceAll("[^A-Za-z0-9._-]", "-");
 	}
 
 	private List<IContentId> parseSpreadsheet(File file) {
