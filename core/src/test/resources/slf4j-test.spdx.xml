@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SpdxDocument xmlns="http://spdx.org/spdx/v2.3">
+  <spdxVersion>SPDX-2.3</spdxVersion>
+  <dataLicense>CC0-1.0</dataLicense>
+  <SPDXID>SPDXRef-DOCUMENT</SPDXID>
+  <name>slf4j-test</name>
+  <documentNamespace>https://example.org/spdx/slf4j-test</documentNamespace>
+  <creationInfo>
+    <created>2026-07-14T00:00:00Z</created>
+    <creators>
+      <creator>Tool: test</creator>
+    </creators>
+  </creationInfo>
+  <packages>
+    <package>
+      <name>slf4j-api</name>
+      <SPDXID>SPDXRef-Package-slf4j-api</SPDXID>
+      <downloadLocation>NOASSERTION</downloadLocation>
+      <filesAnalyzed>false</filesAnalyzed>
+      <licenseConcluded>NOASSERTION</licenseConcluded>
+      <licenseDeclared>NOASSERTION</licenseDeclared>
+      <externalRefs>
+        <externalRef>
+          <referenceCategory>PACKAGE_MANAGER</referenceCategory>
+          <referenceType>purl</referenceType>
+          <referenceLocator>pkg:maven/org.slf4j/slf4j-api@1.7.32</referenceLocator>
+        </externalRef>
+      </externalRefs>
+    </package>
+  </packages>
+</SpdxDocument>

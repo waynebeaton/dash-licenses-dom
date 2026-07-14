@@ -205,6 +205,9 @@ public class Main {
 		if (name.endsWith(".yaml") || name.endsWith(".yml")) {
 			return true;
 		}
+		if (name.endsWith(".xls") || name.endsWith(".xlsx")) {
+			return true;
+		}
 		if (name.endsWith(".json")) {
 			try {
 				JsonNode root = new ObjectMapper().readTree(file);

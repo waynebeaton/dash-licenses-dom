@@ -12,9 +12,11 @@ package org.eclipse.dash.licenses.tests;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.eclipse.dash.licenses.cli.SbomFileReader;
 import org.junit.jupiter.api.Test;
 
@@ -27,6 +29,7 @@ class SbomFileReaderTests {
     private static final String SLF4J_SPDX_TAG_VALUE = "/slf4j-test.spdx";
     private static final String SLF4J_CYCLONEDX_YAML = "/slf4j-test-cyclonedx.yaml";
     private static final String SLF4J_SPDX_YAML = "/slf4j-test.spdx.yaml";
+    private static final String SLF4J_SPDX_XML = "/slf4j-test.spdx.xml";
 
     @Test 
     void testJsonFormat() throws Exception {
@@ -101,6 +104,39 @@ class SbomFileReaderTests {
     @Test
     void testSpdxYamlFormat() throws Exception {
         var input = new File(this.getClass().getResource(SLF4J_SPDX_YAML).toURI());
+        SbomFileReader reader = new SbomFileReader(input);
+        var expected = Arrays.asList(new String[] {
+                "maven/mavencentral/org.slf4j/slf4j-api/1.7.32"
+        });
+        var found = reader.getContentIds().stream().map(each -> each.toString()).collect(Collectors.toList());
+        assertEquals(expected, found);
+    }
+
+    @Test
+    void testSpdxXmlFormat() throws Exception {
+        var input = new File(this.getClass().getResource(SLF4J_SPDX_XML).toURI());
+        SbomFileReader reader = new SbomFileReader(input);
+        var expected = Arrays.asList(new String[] {
+                "maven/mavencentral/org.slf4j/slf4j-api/1.7.32"
+        });
+        var found = reader.getContentIds().stream().map(each -> each.toString()).collect(Collectors.toList());
+        assertEquals(expected, found);
+    }
+
+    @Test
+    void testSpdxXlsxFormat() throws Exception {
+        File input = File.createTempFile("spdx-test", ".xlsx");
+        input.deleteOnExit();
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+                FileOutputStream stream = new FileOutputStream(input)) {
+            var sheet = workbook.createSheet("Package Information");
+            var row = sheet.createRow(0);
+            row.createCell(0).setCellValue("ExternalRef");
+            row.createCell(1).setCellValue("PACKAGE_MANAGER purl pkg:maven/org.slf4j/slf4j-api@1.7.32");
+            workbook.write(stream);
+        }
+
         SbomFileReader reader = new SbomFileReader(input);
         var expected = Arrays.asList(new String[] {
                 "maven/mavencentral/org.slf4j/slf4j-api/1.7.32"
