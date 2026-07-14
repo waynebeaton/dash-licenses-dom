@@ -27,7 +27,9 @@ import java.util.stream.Collectors;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.eclipse.dash.licenses.IContentId;
@@ -45,6 +47,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -177,7 +180,7 @@ public class SpdxDependencyFileReader {
 					found.add(id);
 				}
 			}
-		} catch (Exception e) {
+		} catch (IOException | ParserConfigurationException | SAXException e) {
 			return new ArrayList<>();
 		}
 
@@ -211,7 +214,7 @@ public class SpdxDependencyFileReader {
 			for (SpdxPackage spdxPackage : packages) {
 				addPackageExternalRefs(found, spdxPackage);
 			}
-		} catch (Exception e) {
+		} catch (IOException | InvalidSPDXAnalysisException e) {
 			return new ArrayList<>();
 		} finally {
 			if (!file.equals(normalized)) {
@@ -295,7 +298,7 @@ public class SpdxDependencyFileReader {
 					}
 				}
 			}
-		} catch (Exception e) {
+		} catch (IOException | EncryptedDocumentException e) {
 			return new ArrayList<>();
 		}
 
